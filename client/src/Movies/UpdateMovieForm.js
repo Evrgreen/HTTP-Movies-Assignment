@@ -1,28 +1,68 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useHistory, useParams } from "react-router-dom";
 
-const UpdateMovieForm = () => {
-  const [item, SetItem] = useState({
+const UpdateMovieForm = ({ setMovieList }) => {
+  const [finalItem, setFinalItem] = useState();
+  const [item, setItem] = useState({
     title: "",
     director: "",
     metascore: "",
     stars: ""
   });
-  const { register, error, handleSubmit } = useForm();
-  const formSubmit = (values) => {
-    console.log(values);
+
+  const { id } = useParams();
+  const history = useHistory();
+
+  useEffect(() => {
+    axios
+      .get(`http://localhost:5000/api/movies/${id}`)
+      .then((res) => {
+        setItem(res.data);
+      })
+      .catch((error) => console.log(error));
+  }, []);
+
+  const onSubmit = (event, values) => {
+    event.preventDefault();
+    if (typeof values.stars === "string") {
+      const starArr = values.stars.split(",");
+      setFinalItem({ ...values, ["stars"]: starArr });
+    } else {
+      setFinalItem(values);
+    }
+  };
+
+  useEffect(() => {
+    const updateMovie = async () => {
+      if (!(typeof finalItem === "undefined")) {
+        const data = await axios.put(
+          `http://localhost:5000/api/movies/${id}`,
+          finalItem
+        );
+
+        history.push(`/movies/${id}`);
+      } else {
+      }
+    };
+    updateMovie();
+  }, [finalItem]);
+
+  const handleChange = (event) => {
+    setItem({ ...item, [event.target.name]: event.target.value });
   };
 
   return (
     <>
-      <form onSubmit={() => handleSubmit(formSubmit)}>
+      <form onSubmit={(event) => onSubmit(event, item)}>
         <label htmlFor="title">
           Title
           <input
             type="text"
             className="title"
             id="title"
-            ref={register}
+            value={item.title}
+            onChange={handleChange}
             name="title"
           />
         </label>
@@ -32,7 +72,8 @@ const UpdateMovieForm = () => {
             type="text"
             className="director"
             id="director"
-            ref={register}
+            value={item.director}
+            onChange={handleChange}
             name="director"
           />
         </label>
@@ -41,8 +82,9 @@ const UpdateMovieForm = () => {
           <input
             type="text"
             className="metascore"
-            id="metascire"
-            ref={register}
+            id="metascore"
+            value={item.metascore}
+            onChange={handleChange}
             name="metascore"
           />
         </label>
@@ -52,7 +94,8 @@ const UpdateMovieForm = () => {
             type="text"
             className="stars"
             id="stars"
-            ref={register}
+            value={item.stars}
+            onChange={handleChange}
             name="stars"
           />
         </label>
